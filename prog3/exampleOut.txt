@@ -1,0 +1,3 @@
+1,a,decent,food,good,had,meal,place,there,this,wasnt
+1,0,0,1,1,1,0,1,0,1,0,0
+0,1,1,0,0,0,1,0,1,0,1,0

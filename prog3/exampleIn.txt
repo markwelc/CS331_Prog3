@@ -1,0 +1,2 @@
+This place had good food.	1
+There wasn't a decent meal.	0

@@ -17,7 +17,8 @@ int main()
 {
 
     preprocessor("trainingSet.txt", "preprocessed_train.txt");
-    //preprocessor("testSet.txt", "preprocessed_test.txt");
+    preprocessor("testSet.txt", "preprocessed_test.txt");
+    preprocessor("exampleIn.txt", "exampleOut.txt");
 
     classifier();
 
@@ -92,12 +93,13 @@ void preprocessor(string fileInName, string fileOutName)
     //at this point, vocab should contain every word and allLines should contain every line
 
     //print the vocab into the output files
-    auto iter = vocab.begin();
-    fileOut << *iter;
-    while(iter != vocab.end()) 
+    auto hiter = vocab.begin();
+    fileOut << *hiter;
+    hiter++;
+    while(hiter != vocab.end()) 
     {
-        fileOut << ',' << *iter;
-        iter++;
+        fileOut << ',' << *hiter;
+        hiter++;
     }
     fileOut << endl;
 
@@ -106,33 +108,27 @@ void preprocessor(string fileInName, string fileOutName)
     for(unsigned int i = 0; i < vocab.size() + 1; i++)
         curPrepro[i] = 0;
     //for every word in allLines
-    //cout << "I'd be very surprised if this didn't show up" << endl;
     for(auto iter = allLinesSplit.begin(); iter != allLinesSplit.end(); iter++)
     {
-        //cout << "double boo" << endl;
         for(auto kiter = iter->begin(); kiter != iter->end(); kiter++)
         {
-            //cout << "boo" << endl;
             //find a match in vocab
-            for(auto jiter = vocab.begin(); jiter != vocab.end(); jiter++)
+            for(auto jiter = vocab.begin(); jiter != vocab.end(); jiter++)//I could make this loop quite a bit faster, but I don't care
             {
                 if(kiter->compare(*jiter) == 0)
-                {
                     curPrepro[jiter - vocab.begin()] = 1;
-                    //cout <<  *kiter << " == " << *jiter << endl;
-                }
-                // else
-                // {
-                //     cout << *kiter << " != " << *jiter << endl;
-                // }
-                
             }
         }
+        //at this point, we've gone through every word in a line
         //stick it into the output file
         fileOut << curPrepro[0];
         for(unsigned int i = 1; i < vocab.size() + 1; i++)
             fileOut << ',' << curPrepro[i];
         fileOut << endl;
+
+        //reset curPrepro
+        for(unsigned int i = 0; i < vocab.size() + 1; i++)
+            curPrepro[i] = 0;
     }
 }
 
