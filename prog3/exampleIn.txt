@@ -1,2 +1,5 @@
 This place had good food.	1
-There wasn't a decent meal.	0
+There wa15sn't a decent meal.	0
+This is an 2 example of a review	1
+I didn't like it	0
+I liked 0 it a lot	0

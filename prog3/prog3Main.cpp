@@ -16,8 +16,8 @@ void cleanLine(vector<char> & line);
 int main()
 {
 
-    preprocessor("trainingSet.txt", "preprocessed_train.txt");
-    preprocessor("testSet.txt", "preprocessed_test.txt");
+    // preprocessor("trainingSet.txt", "preprocessed_train.txt");
+    // preprocessor("testSet.txt", "preprocessed_test.txt");
     preprocessor("exampleIn.txt", "exampleOut.txt");
 
     classifier();
@@ -36,8 +36,9 @@ void preprocessor(string fileInName, string fileOutName)
     //I don't know why the words here aren't colored
     vector<string> vocab; //so this holds all the words
     int* curPrepro = NULL;
-    // vector<string> allLines;
     vector<vector<string>> allLinesSplit;
+    //char curRating = '\0'; //holds the rating of the current line
+    string curRatingStr = "";
 
     //this might be opening them prematurely, I don't know. It shouldn't matter though
     fileIn.open(fileInName);
@@ -49,12 +50,22 @@ void preprocessor(string fileInName, string fileOutName)
     while(getline(fileIn, curLine))
     {
         vector<char> curLineV(curLine.begin(), curLine.end()); //turn it into a vector
-        cleanLine(curLineV);//clean it up
 
-        //put the current line in the corresponding all lines vector
-        // string temp(curLineV.begin(), curLineV.end());
-        // if(!temp.empty())
-        //     allLines.push_back(temp);
+        for (auto iter = curLineV.end(); iter != curLineV.begin(); --iter)//this is an absurd solution, but it works
+        {
+            if(*iter == '1')
+            {
+                curRatingStr = "1";
+                break;
+            }
+            else if(*iter == '0')
+            {
+                curRatingStr = "0";
+                break;
+            }
+        }
+
+        cleanLine(curLineV);//clean it up
 
         //as we put words into vocab, we're also going to put them into allLinesSplit
         vector<string> curLineSplit;
@@ -85,13 +96,14 @@ void preprocessor(string fileInName, string fileOutName)
             }
         }
         
+        curLineSplit.push_back(curRatingStr);//now, although every other number is gone, the rating is still there
+        curRatingStr = "";
         allLinesSplit.push_back(curLineSplit);
 
         curLineV.clear();
     }
 
     //at this point, vocab should contain every word and allLines should contain every line
-
     //print the vocab into the output files
     auto hiter = vocab.begin();
     fileOut << *hiter;
@@ -101,7 +113,7 @@ void preprocessor(string fileInName, string fileOutName)
         fileOut << ',' << *hiter;
         hiter++;
     }
-    fileOut << endl;
+    fileOut << ",classLabel" << endl;
 
     //actually make the preprocessed stuff
     curPrepro = new int[vocab.size() + 1];
@@ -110,7 +122,7 @@ void preprocessor(string fileInName, string fileOutName)
     //for every word in allLines
     for(auto iter = allLinesSplit.begin(); iter != allLinesSplit.end(); iter++)
     {
-        for(auto kiter = iter->begin(); kiter != iter->end(); kiter++)
+        for(auto kiter = iter->begin(); kiter != iter->end() - 1; kiter++)
         {
             //find a match in vocab
             for(auto jiter = vocab.begin(); jiter != vocab.end(); jiter++)//I could make this loop quite a bit faster, but I don't care
@@ -119,7 +131,16 @@ void preprocessor(string fileInName, string fileOutName)
                     curPrepro[jiter - vocab.begin()] = 1;
             }
         }
-        //at this point, we've gone through every word in a line
+
+        //at this point, we've gone through every word in a line save the last thing (the rating)
+
+        if(*(iter->end() - 1) == "0")
+            curPrepro[vocab.size()] = 0;//get the rating and stick it onto curPrepro
+        else if(*(iter->end() - 1) == "1")
+            curPrepro[vocab.size()] = 1;
+        else
+            cout << "iter->end() - 1 = " << *(iter->end() - 1) << endl;
+
         //stick it into the output file
         fileOut << curPrepro[0];
         for(unsigned int i = 1; i < vocab.size() + 1; i++)
@@ -127,7 +148,7 @@ void preprocessor(string fileInName, string fileOutName)
         fileOut << endl;
 
         //reset curPrepro
-        for(unsigned int i = 0; i < vocab.size() + 1; i++)
+        for(unsigned int i = 0; i < vocab.size(); i++)
             curPrepro[i] = 0;
     }
 }
@@ -151,7 +172,7 @@ void cleanLine(vector<char> & line)
         line.at(i) = tolower(*iPtr);
         if(iswspace(*iPtr))
             line.at(i) = ' ';//change all whitespaces to spaces
-        if(isalnum(*iPtr) || isspace(*iPtr))//if the character isn't an alphanumeric character or a whitspace
+        if(isalpha(*iPtr) || isspace(*iPtr))//if the character isn't an alphanumeric character or a whitspace
         {
             iPtr++;
             i++;
