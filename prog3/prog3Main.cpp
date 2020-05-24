@@ -11,14 +11,19 @@
 using namespace std;
 
 void preprocessor(string fileInName, string fileOutName);
+void training();
 void classifier();
 void cleanLine(vector<char> & line);
 
 struct vocabdata
 {
     string vocab;
-    int grev;
-    int brev;
+
+    float grev;
+    float brev;
+
+    float pbrev;     //probability of good review
+    float pgrev;      //probability of bad review
 };
 
 //global for training data
@@ -33,8 +38,10 @@ int main()
     // preprocessor("testSet.txt", "preprocessed_test.txt");
     vdatatrain = 1;
     preprocessor("exampleIn.txt", "exampleOut.txt");
-
+    training();
     classifier();
+
+    //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
 
     return 0;
 }
@@ -113,9 +120,9 @@ void preprocessor(string fileInName, string fileOutName)
                     if(it != -1)
                     {
                         if(curRatingStr == "1")
-                            vdata[it].grev ++;
+                            vdata[it].grev += 1.0;
                         else
-                            vdata[it].brev ++;
+                            vdata[it].brev += 1.0;
                     }
                     else{
                         vdata.push_back(vocabdata());
@@ -123,12 +130,12 @@ void preprocessor(string fileInName, string fileOutName)
                         vdata[curvec].vocab = temp2;
                         //add number of good/bad
                         if(curRatingStr == "1"){
-                            vdata[curvec].grev = 1;
-                            vdata[curvec].brev = 0;
+                            vdata[curvec].grev = 1.0;
+                            vdata[curvec].brev = 0.0;
                         }
                         else{
-                            vdata[curvec].grev = 0;
-                            vdata[curvec].brev = 1;
+                            vdata[curvec].grev = 0.0;
+                            vdata[curvec].brev = 1.0;
                         }
                     }
                 }
@@ -218,7 +225,31 @@ void preprocessor(string fileInName, string fileOutName)
     }
 }
 
+void training()
+{
+    vector<vocabdata>::iterator it;
+    it = vdata.begin();
+    it = vdata.insert(it,0,vocabdata());
 
+    vdata[0].vocab = " ";
+
+    float numberg = 0.0;
+    float numberb = 0.0;
+    float tnumber = 0.0;
+    for(int i = 0; i < vdata.size(); i++){
+        tnumber += vdata[i].grev + vdata[i].brev;
+        numberg += vdata[i].grev;
+        numberb += vdata[i].brev;
+
+        vdata[i].pgrev = (vdata[i].grev) / (vdata[i].grev + vdata[i].brev);
+        vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
+    }
+    
+    vdata[0].pgrev = (numberg) / (tnumber);
+    vdata[0].pbrev = (numberb) / (tnumber);
+
+    cout << "Training Done" << endl;
+}
 
 void classifier()
 {
