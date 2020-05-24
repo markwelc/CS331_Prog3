@@ -21,11 +21,17 @@ struct vocabdata
     int brev;
 };
 
+//global for training data
+vector<vocabdata> vdata;
+//turn on when inputing trainning data
+int vdatatrain = 0;
+
 int main()
 {
 
     // preprocessor("trainingSet.txt", "preprocessed_train.txt");
     // preprocessor("testSet.txt", "preprocessed_test.txt");
+    vdatatrain = 1;
     preprocessor("exampleIn.txt", "exampleOut.txt");
 
     classifier();
@@ -43,7 +49,6 @@ void preprocessor(string fileInName, string fileOutName)
 
     //I don't know why the words here aren't colored
     vector<string> vocab; //so this holds all the words and data
-    vector<vocabdata> vdata;
     int* curPrepro = NULL;
     vector<vector<string>> allLinesSplit;
     //char curRating = '\0'; //holds the rating of the current line
@@ -96,33 +101,35 @@ void preprocessor(string fileInName, string fileOutName)
                 string temp2(start, end);
                 
                 //makes vector for bayes computation
-                int it = -1;
-                for(int z = 0; z < vdata.size(); z++){
-                    if(vdata[z].vocab == temp2){
-                        it = z;
-                        break;
+                if(vdatatrain == 1){
+                    int it = -1;
+                    for(int z = 0; z < vdata.size(); z++){
+                        if(vdata[z].vocab == temp2){
+                            it = z;
+                            break;
+                        }
                     }
-                }
 
-                if(it != -1)
-                {
-                    if(curRatingStr == "1")
-                        vdata[it].grev ++;
-                    else
-                        vdata[it].brev ++;
-                }
-                else{
-                    vdata.push_back(vocabdata());
-                    int curvec = vdata.size()-1;
-                    vdata[curvec].vocab = temp2;
-                    //add number of good/bad
-                    if(curRatingStr == "1"){
-                        vdata[curvec].grev = 1;
-                        vdata[curvec].brev = 0;
+                    if(it != -1)
+                    {
+                        if(curRatingStr == "1")
+                            vdata[it].grev ++;
+                        else
+                            vdata[it].brev ++;
                     }
                     else{
-                        vdata[curvec].grev = 0;
-                        vdata[curvec].brev = 1;
+                        vdata.push_back(vocabdata());
+                        int curvec = vdata.size()-1;
+                        vdata[curvec].vocab = temp2;
+                        //add number of good/bad
+                        if(curRatingStr == "1"){
+                            vdata[curvec].grev = 1;
+                            vdata[curvec].brev = 0;
+                        }
+                        else{
+                            vdata[curvec].grev = 0;
+                            vdata[curvec].brev = 1;
+                        }
                     }
                 }
                 
