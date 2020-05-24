@@ -6,12 +6,20 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
 void preprocessor(string fileInName, string fileOutName);
 void classifier();
 void cleanLine(vector<char> & line);
+
+struct vocabdata
+{
+    string vocab;
+    int grev;
+    int brev;
+};
 
 int main()
 {
@@ -34,7 +42,8 @@ void preprocessor(string fileInName, string fileOutName)
     string curLine;
 
     //I don't know why the words here aren't colored
-    vector<string> vocab; //so this holds all the words
+    vector<string> vocab; //so this holds all the words and data
+    vector<vocabdata> vdata;
     int* curPrepro = NULL;
     vector<vector<string>> allLinesSplit;
     //char curRating = '\0'; //holds the rating of the current line
@@ -80,15 +89,60 @@ void preprocessor(string fileInName, string fileOutName)
 
             if(start && end)
             {
+                
+
+                //auto newitr = curLineV.end();
+                //end = &(*newitr);
                 string temp2(start, end);
+                
+                //makes vector for bayes computation
+                int it = -1;
+                for(int z = 0; z < vdata.size(); z++){
+                    if(vdata[z].vocab == temp2){
+                        it = z;
+                        break;
+                    }
+                }
+
+                if(it != -1)
+                {
+                    if(curRatingStr == "1")
+                        vdata[it].grev ++;
+                    else
+                        vdata[it].brev ++;
+                }
+                else{
+                    vdata.push_back(vocabdata());
+                    int curvec = vdata.size()-1;
+                    vdata[curvec].vocab = temp2;
+                    //add number of good/bad
+                    if(curRatingStr == "1"){
+                        vdata[curvec].grev = 1;
+                        vdata[curvec].brev = 0;
+                    }
+                    else{
+                        vdata[curvec].grev = 0;
+                        vdata[curvec].brev = 1;
+                    }
+                }
+                
+                
+
+
+                //initilize in vocab
                 auto kiter = vocab.begin();
                 while(kiter != vocab.end() && temp2.compare(*kiter) > 0)
+                {
                     kiter++;
+                }
                 if(kiter == vocab.end())
+                {
                     vocab.push_back(temp2);
+                }
                 else if(temp2.compare(*kiter) != 0)
-                    vocab.emplace(kiter, temp2);
-
+                {   
+                    vocab.emplace(kiter, temp2);          
+                }
                 curLineSplit.push_back(temp2);
 
                 start = NULL;
@@ -101,6 +155,10 @@ void preprocessor(string fileInName, string fileOutName)
         allLinesSplit.push_back(curLineSplit);
 
         curLineV.clear();
+
+        /*for (int x = 0; x<vdata.size(); ++x)
+            cout << vdata[x].vocab << endl;
+        cout << "actual vocab size: " << vocab.size() << "\tnew vector size: " << vdata.size() << endl;*/
     }
 
     //at this point, vocab should contain every word and allLines should contain every line
