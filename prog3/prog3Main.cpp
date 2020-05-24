@@ -157,8 +157,8 @@ void preprocessor(string fileInName, string fileOutName)
         curLineV.clear();
 
         /*for (int x = 0; x<vdata.size(); ++x)
-            cout << vdata[x].vocab << endl;
-        cout << "actual vocab size: " << vocab.size() << "\tnew vector size: " << vdata.size() << endl;*/
+            cout << vdata[x].vocab << " " <<  vdata[x].brev << " " <<  vdata[x].grev << endl;
+        cout << "actual vocab size: " << vocab.size() << "\tnew vector size: " << vdata.size() << endl;//*/
     }
 
     //at this point, vocab should contain every word and allLines should contain every line
