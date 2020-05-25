@@ -22,7 +22,7 @@ struct vocabdata
 
     vocabdata()
     {
-        word = "test***";
+        word = "default***"; //lets hope we never see this again
         grev = 0;
         brev = 0;
         pgrev = 0;
