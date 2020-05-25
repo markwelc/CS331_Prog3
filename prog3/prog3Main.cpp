@@ -11,8 +11,8 @@
 using namespace std;
 
 void preprocessor(string fileInName, string fileOutName);
-void training();
-void classifier();
+//void training();
+//void classifier();
 void cleanLine(vector<char> & line);
 
 struct vocabdata
@@ -22,8 +22,17 @@ struct vocabdata
     float grev;
     float brev;
 
-    float pbrev;     //probability of good review
-    float pgrev;      //probability of bad review
+    float pgrev;     //probability of good review
+    float pbrev;      //probability of bad review
+
+    vocabdata()
+    {
+        word = "";
+        grev = 0;
+        brev = 0;
+        pgrev = 0;
+        pbrev = 0;
+    }
 };
 float accuracyofclassifier = 0;
 
@@ -39,8 +48,8 @@ int main()
     // preprocessor("testSet.txt", "preprocessed_test.txt");
     vdatatrain = 1;
     preprocessor("exampleIn.txt", "exampleOut.txt");
-    training();
-    classifier();
+    //training();
+    //classifier();
 
     //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
 
@@ -105,49 +114,6 @@ void preprocessor(string fileInName, string fileOutName)
                 //auto newitr = curLineV.end();
                 //end = &(*newitr);
                 string temp2(start, end);
-                
-                //makes vector for bayes computation
-                // if(vdatatrain == 1) //we would still need alot of it but some of it can be removed//so all this could go away if vocab had structs instead of strings?
-                // //we just need to also record grev and brev
-                // //yeah
-                // //cool
-                // are you busy for a couple day? i can try to redo your code to work with structs but it might take me a long time haha
-                // {
-                //     int it = -1;
-                //     for(int z = 0; z < vdata.size(); z++)//so this just looks for the first match
-                //     {
-                //         if(vdata[z].vocab == temp2){
-                //             it = z;
-                //             break;
-                //         }
-                //     }
-
-                //     if(it != -1) //if there was a match, increment the num of times it was in a good/bad review
-                //     {
-                //         if(curRatingStr == "1")
-                //             vdata[it].grev += 1.0;
-                //         else
-                //             vdata[it].brev += 1.0;
-                //     }
-                //     else//so there wasn't a match
-                //     {
-                //         vdata.push_back(vocabdata());//stick an empty new item on the back
-
-                //         int curvec = vdata.size()-1;//access last thing in vector
-                //         vdata[curvec].vocab = temp2;//set its string to the word we just got
-                //         //add number of good/bad
-                //         if(curRatingStr == "1")//this is the only review with this word
-                //         {
-                //             vdata[curvec].grev = 1.0;
-                //             vdata[curvec].brev = 0.0;
-                //         }
-                //         else
-                //         {
-                //             vdata[curvec].grev = 0.0;
-                //             vdata[curvec].brev = 1.0;
-                //         }
-                //     }
-                // }
 
                 //initilize in vocab
                 auto kiter = vocab.begin();
@@ -157,7 +123,9 @@ void preprocessor(string fileInName, string fileOutName)
                 }
                 if(kiter == vocab.end())
                 {
-                    vocab.push_back(vocabdata());
+                    vocabdata temp = NULL;
+                    temp = new vocabdata();
+                    vocab.push_back(temp);
                     (vocab.end())->word = temp2;
                     if(curRatingStr == "1")//this is the only review with this word
                     {
@@ -257,75 +225,75 @@ void preprocessor(string fileInName, string fileOutName)
     }
 }
 
-void training()
-{   
-    //insert an extra vocab on to hold data for parent review percents
-    vector<vocabdata>::iterator it;
-    it = vdata.begin();
-    it = vdata.insert(it,0,vocabdata());
+// void training()
+// {   
+//     //insert an extra vocab on to hold data for parent review percents
+//     vector<vocabdata>::iterator it;
+//     it = vdata.begin();
+//     it = vdata.insert(it,0,vocabdata());
 
-    //vdata[0].vocab = " ";
+//     //vdata[0].vocab = " ";
 
-    //to find the percent that a review is good or bad
-    float numberg = 0.0;
-    float numberb = 0.0;
-    float tnumber = 0.0;
+//     //to find the percent that a review is good or bad
+//     float numberg = 0.0;
+//     float numberb = 0.0;
+//     float tnumber = 0.0;
 
-    //finds percentages for how often a word results in a good or bad review
-    for(int i = 0; i < vdata.size(); i++){
-        tnumber += vdata[i].grev + vdata[i].brev;
-        numberg += vdata[i].grev;
-        numberb += vdata[i].brev;
+//     //finds percentages for how often a word results in a good or bad review
+//     for(int i = 0; i < vdata.size(); i++){
+//         tnumber += vdata[i].grev + vdata[i].brev;
+//         numberg += vdata[i].grev;
+//         numberb += vdata[i].brev;
 
-        vdata[i].pgrev = (vdata[i].grev) / (vdata[i].grev + vdata[i].brev);
-        vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
-    }
+//         vdata[i].pgrev = (vdata[i].grev) / (vdata[i].grev + vdata[i].brev);
+//         vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
+//     }
     
-    //calculate review percents
-    vdata[0].pgrev = (numberg) / (tnumber);
-    vdata[0].pbrev = (numberb) / (tnumber);
+//     //calculate review percents
+//     vdata[0].pgrev = (numberg) / (tnumber);
+//     vdata[0].pbrev = (numberb) / (tnumber);
 
-    cout << "Training Done" << endl;
-}
+//     cout << "Training Done" << endl;
+// }
 
 //send it curPrero to find which words are in sentences
-void classifier()
-{
-    vector<float> spredics;
-    vector<int> vpresent;
+// void classifier()
+// {
+//     vector<float> spredics;
+//     vector<int> vpresent;
 
-    int numcorrect;
+//     int numcorrect;
 
-    for(int i = 0; i < vpresent.size(); i++){
-        float curgpredict = 0.0;
-        float curbpredict = 0.0;
-        //minus 2 because of the extra vocab word added
-        for(int j = 0; j<vdata.size()-2; j++){
-            if(vpresent[i] == 1)
-            {
-                //gets vocab word a present location and checks probailities and multiplies them on
-                curgpredict = curgpredict * vdata[j].pgrev;
-                curbpredict = curbpredict * vdata[j].pbrev;
-            }
-            i++;
-        }
-        //multiplies on total prediction
-        curgpredict = curgpredict * vdata[0].pgrev;
-        curbpredict = curbpredict * vdata[0].pbrev;
+//     for(int i = 0; i < vpresent.size(); i++){
+//         float curgpredict = 0.0;
+//         float curbpredict = 0.0;
+//         //minus 2 because of the extra vocab word added
+//         for(int j = 0; j<vdata.size()-2; j++){
+//             if(vpresent[i] == 1)
+//             {
+//                 //gets vocab word a present location and checks probailities and multiplies them on
+//                 curgpredict = curgpredict * vdata[j].pgrev;
+//                 curbpredict = curbpredict * vdata[j].pbrev;
+//             }
+//             i++;
+//         }
+//         //multiplies on total prediction
+//         curgpredict = curgpredict * vdata[0].pgrev;
+//         curbpredict = curbpredict * vdata[0].pbrev;
 
-        /*if(curgpredict > curbpredict)
-            spredics.insert(spredics.end(),spredics.begin(),curgpredict);
-        else
-            spredics.insert(spredics.end(),spredics.begin(),curbpredict);*/
+//         /*if(curgpredict > curbpredict)
+//             spredics.insert(spredics.end(),spredics.begin(),curgpredict);
+//         else
+//             spredics.insert(spredics.end(),spredics.begin(),curbpredict);*/
 
-        if(vpresent[i] == spredics[spredics.size()-1])
-            numcorrect += 1.0;
-    }
+//         if(vpresent[i] == spredics[spredics.size()-1])
+//             numcorrect += 1.0;
+//     }
 
-    //accuracy of classifier
-    accuracyofclassifier = numcorrect / ((float)(spredics.size()));
-    return;
-}
+//     //accuracy of classifier
+//     accuracyofclassifier = numcorrect / ((float)(spredics.size()));
+//     return;
+// }
 
 
 

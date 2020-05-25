@@ -1,0 +1,42 @@
+//makes vector for bayes computation
+                // if(vdatatrain == 1) //we would still need alot of it but some of it can be removed//so all this could go away if vocab had structs instead of strings?
+                // //we just need to also record grev and brev
+                // //yeah
+                // //cool
+                // are you busy for a couple day? i can try to redo your code to work with structs but it might take me a long time haha
+                // {
+                //     int it = -1;
+                //     for(int z = 0; z < vdata.size(); z++)//so this just looks for the first match
+                //     {
+                //         if(vdata[z].vocab == temp2){
+                //             it = z;
+                //             break;
+                //         }
+                //     }
+
+                //     if(it != -1) //if there was a match, increment the num of times it was in a good/bad review
+                //     {
+                //         if(curRatingStr == "1")
+                //             vdata[it].grev += 1.0;
+                //         else
+                //             vdata[it].brev += 1.0;
+                //     }
+                //     else//so there wasn't a match
+                //     {
+                //         vdata.push_back(vocabdata());//stick an empty new item on the back
+
+                //         int curvec = vdata.size()-1;//access last thing in vector
+                //         vdata[curvec].vocab = temp2;//set its string to the word we just got
+                //         //add number of good/bad
+                //         if(curRatingStr == "1")//this is the only review with this word
+                //         {
+                //             vdata[curvec].grev = 1.0;
+                //             vdata[curvec].brev = 0.0;
+                //         }
+                //         else
+                //         {
+                //             vdata[curvec].grev = 0.0;
+                //             vdata[curvec].brev = 1.0;
+                //         }
+                //     }
+                // }
