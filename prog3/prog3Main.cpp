@@ -23,14 +23,15 @@ struct vocabdata
     vocabdata()
     {
         word = "default***"; //lets hope we never see this again
-        grev = 0;
-        brev = 0;
-        pgrev = 0;
-        pbrev = 0;
+        grev = 0.0;
+        brev = 0.0;
+        pgrev = -1.0;
+        pbrev = -1.0;
     }
 };
 
 float accuracyofclassifier = 0; //stores data for accuracy of the actual data set
+int trainonvar = 0;
 
 
 int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vocab, int & arrsize);
@@ -52,7 +53,9 @@ int main()
     //int** mapmatrix = preprocessor("exampleIn.txt", "exampleOut.txt",vocab,arrsize);
     
     //training data
+    trainonvar = 1;
     int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
+    trainonvar = 0;
     training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
@@ -65,7 +68,7 @@ int main()
 
     //test data
     arrsize = 0;
-    int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",dummy,arrsize);
+    int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",vocab,arrsize);
 
     cout << "\nTesting on Test Data" << endl; 
 
@@ -167,7 +170,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
                 if(kiter == vocab.end())
                 {
                     vocabdata* temp = new vocabdata();//it wasn't a pointer...
-                    
+                        
                     //cout << "temp->word = " << temp->word << endl;
                     //temp->word = temp2;
 
@@ -203,10 +206,10 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
                     }
 
                     vocab.emplace(kiter, *VocabDataEl); //put an empty thing there
-                    
+                        
                     //cout << "kiter->word = " <<  temp2 << endl;
                     //kiter->word = temp2; //set its word
-                    
+                        
                 }
 
                 curLineSplit.push_back(temp2);
@@ -234,6 +237,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
     //this stuff just printing out for debugging?
     /*for (int x = 0; x<vocab.size(); ++x)
         cout << vocab[x].word << " " <<  vocab[x].brev << " " <<  vocab[x].grev << endl;//*/
+    cout << "actual vocab size: " << vocab.size() << endl;//*/
 
     //at this point, vocab should contain every word and allLines should contain every line
     //print the vocab into the output files
@@ -311,7 +315,7 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
     //temp->word = temp2;
                     
     vocab.push_back(*temp);
-    (vocab.end() - 1)->word = " ";
+    (vocab.end() - 1)->word = "**";
 
     //vdata[0].vocab = " ";
 
@@ -369,13 +373,15 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
-                curgpredict = curgpredict * vocab[j].pgrev;
-                curbpredict = curbpredict * vocab[j].pbrev;
+                if(vocab[j].pgrev != -1.0)
+                    curgpredict = curgpredict * vocab[j].pgrev;
+                if(vocab[j].pbrev != -1.0)
+                    curbpredict = curbpredict * vocab[j].pbrev;
             }
         }
 
         //testing
-        //cout << "good prediction: " << curgpredict << "\tbad prediction: " << curbpredict << endl;
+        cout << "good prediction: " << curgpredict << "\tbad prediction: " << curbpredict << endl;
 
         //decides if sentence is good or bad off which percent is higher
         if(curgpredict > curbpredict)
@@ -385,6 +391,9 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 
         if(mapmatrix[i][vocab.size()-1] == spredics[spredics.size()-1])
             numcorrect += 1.0;
+
+        //testing
+        cout << "prediction: " << spredics[spredics.size()-1] << endl;
     }
     cout << "\nClassifier is Done" << endl;
 
