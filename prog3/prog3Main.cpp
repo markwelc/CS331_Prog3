@@ -27,7 +27,7 @@ struct vocabdata
 
     vocabdata()
     {
-        word = "";
+        word = "test***";
         grev = 0;
         brev = 0;
         pgrev = 0;
@@ -123,49 +123,45 @@ void preprocessor(string fileInName, string fileOutName)
                 }
                 if(kiter == vocab.end())
                 {
-                    vocabdata temp = NULL;
-                    temp = new vocabdata();
-                    vocab.push_back(temp);
-                    (vocab.end())->word = temp2;
+                    vocabdata* temp = new vocabdata();//it wasn't a pointer...
+                    //cout << "temp->word = " << temp->word << endl;
+                    //temp->word = temp2;
+                    vocab.push_back(*temp);
+                    (vocab.end() - 1)->word = temp2;
                     if(curRatingStr == "1")//this is the only review with this word
-                    {
-                        (vocab.end())->grev = 1.0;
-                        (vocab.end())->brev = 0.0;
-                    }
+                        (vocab.end() - 1)->grev = 1.0;
                     else
-                    {
-                        (vocab.end())->grev = 0.0;
-                        (vocab.end())->brev = 1.0;
-                    }
+                        (vocab.end() - 1)->brev = 1.0;
+                    //cout << " test1 " << vocab[0].word << endl;
                 }
                 else if(temp2.compare(kiter->word) != 0)
                 {   
                     //we've found where the word should go
-                    vocab.emplace(kiter, vocabdata()); //put an empty thing there //I have no idea if this works
-                    kiter->word = temp2; //set its word //I also have no idea if this works
-                    if(curRatingStr == "1")//set its rating //this is the only review with this word
-                    {
+                    vocabdata* VocabDataEl = new vocabdata();
+                    VocabDataEl->word = temp2;
+                    vocab.emplace(kiter, *VocabDataEl); //put an empty thing there
+                    //cout << "kiter->word = " << kiter->word << endl;
+                    //kiter->word = temp2; //set its word
+                    
+                    if(curRatingStr == "1")//set its rating. This is the only review with this word
                         kiter->grev = 1.0;
-                        kiter->brev = 0.0;
-                    }
                     else
-                    {
-                        kiter->grev = 0.0;
-                        kiter->brev = 1.0;
-                    }      
+                        kiter->brev = 1.0; 
                 }
-                curLineSplit.push_back(temp2);//this has nothing to do with vocab, so it should be fine
 
+                curLineSplit.push_back(temp2);
                 start = NULL;
                 end = NULL;
             }
         }
-        
+
         curLineSplit.push_back(curRatingStr);//now, although every other number is gone, the rating is still there
         curRatingStr = "";
         allLinesSplit.push_back(curLineSplit);
 
         curLineV.clear();
+
+        cout << " test2 " << endl;
 
         //this stuff just printing out for debugging?
         /*for (int x = 0; x<vdata.size(); ++x)
@@ -225,75 +221,75 @@ void preprocessor(string fileInName, string fileOutName)
     }
 }
 
-// void training()
-// {   
-//     //insert an extra vocab on to hold data for parent review percents
-//     vector<vocabdata>::iterator it;
-//     it = vdata.begin();
-//     it = vdata.insert(it,0,vocabdata());
+void training()
+{   
+    //insert an extra vocab on to hold data for parent review percents
+    vector<vocabdata>::iterator it;
+    it = vdata.begin();
+    it = vdata.insert(it,0,vocabdata());
 
-//     //vdata[0].vocab = " ";
+    //vdata[0].vocab = " ";
 
-//     //to find the percent that a review is good or bad
-//     float numberg = 0.0;
-//     float numberb = 0.0;
-//     float tnumber = 0.0;
+    //to find the percent that a review is good or bad
+    float numberg = 0.0;
+    float numberb = 0.0;
+    float tnumber = 0.0;
 
-//     //finds percentages for how often a word results in a good or bad review
-//     for(int i = 0; i < vdata.size(); i++){
-//         tnumber += vdata[i].grev + vdata[i].brev;
-//         numberg += vdata[i].grev;
-//         numberb += vdata[i].brev;
+    //finds percentages for how often a word results in a good or bad review
+    for(int i = 0; i < vdata.size(); i++){
+        tnumber += vdata[i].grev + vdata[i].brev;
+        numberg += vdata[i].grev;
+        numberb += vdata[i].brev;
 
-//         vdata[i].pgrev = (vdata[i].grev) / (vdata[i].grev + vdata[i].brev);
-//         vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
-//     }
+        vdata[i].pgrev = (vdata[i].grev) / (vdata[i].grev + vdata[i].brev);
+        vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
+    }
     
-//     //calculate review percents
-//     vdata[0].pgrev = (numberg) / (tnumber);
-//     vdata[0].pbrev = (numberb) / (tnumber);
+    //calculate review percents
+    vdata[0].pgrev = (numberg) / (tnumber);
+    vdata[0].pbrev = (numberb) / (tnumber);
 
-//     cout << "Training Done" << endl;
-// }
+    cout << "Training Done" << endl;
+}
 
-//send it curPrero to find which words are in sentences
-// void classifier()
-// {
-//     vector<float> spredics;
-//     vector<int> vpresent;
+send it curPrero to find which words are in sentences
+void classifier()
+{
+    vector<float> spredics;
+    vector<int> vpresent;
 
-//     int numcorrect;
+    int numcorrect;
 
-//     for(int i = 0; i < vpresent.size(); i++){
-//         float curgpredict = 0.0;
-//         float curbpredict = 0.0;
-//         //minus 2 because of the extra vocab word added
-//         for(int j = 0; j<vdata.size()-2; j++){
-//             if(vpresent[i] == 1)
-//             {
-//                 //gets vocab word a present location and checks probailities and multiplies them on
-//                 curgpredict = curgpredict * vdata[j].pgrev;
-//                 curbpredict = curbpredict * vdata[j].pbrev;
-//             }
-//             i++;
-//         }
-//         //multiplies on total prediction
-//         curgpredict = curgpredict * vdata[0].pgrev;
-//         curbpredict = curbpredict * vdata[0].pbrev;
+    for(int i = 0; i < vpresent.size(); i++){
+        float curgpredict = 0.0;
+        float curbpredict = 0.0;
+        //minus 2 because of the extra vocab word added
+        for(int j = 0; j<vdata.size()-2; j++){
+            if(vpresent[i] == 1)
+            {
+                //gets vocab word a present location and checks probailities and multiplies them on
+                curgpredict = curgpredict * vdata[j].pgrev;
+                curbpredict = curbpredict * vdata[j].pbrev;
+            }
+            i++;
+        }
+        //multiplies on total prediction
+        curgpredict = curgpredict * vdata[0].pgrev;
+        curbpredict = curbpredict * vdata[0].pbrev;
 
-//         /*if(curgpredict > curbpredict)
-//             spredics.insert(spredics.end(),spredics.begin(),curgpredict);
-//         else
-//             spredics.insert(spredics.end(),spredics.begin(),curbpredict);*/
+        /*if(curgpredict > curbpredict)
+            spredics.insert(spredics.end(),spredics.begin(),curgpredict);
+        else
+            spredics.insert(spredics.end(),spredics.begin(),curbpredict);*/
 
-//         if(vpresent[i] == spredics[spredics.size()-1])
-//             numcorrect += 1.0;
-//     }
+        if(vpresent[i] == spredics[spredics.size()-1])
+            numcorrect += 1.0;
+    }
 
-//     //accuracy of classifier
-//     accuracyofclassifier = numcorrect / ((float)(spredics.size()));
-//     return;
-// }
+    //accuracy of classifier
+    accuracyofclassifier = numcorrect / ((float)(spredics.size()));
+    return;
+}
 
 
 
