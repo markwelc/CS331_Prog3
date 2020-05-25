@@ -35,13 +35,17 @@ float accuracyofclassifier = 0; //stores data for accuracy of the actual data se
 
 int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vocab, int & arrsize);
 void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize);
-void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsiz);
+float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsiz);
 void cleanLine(vector<char> & line);
 
 int main()
 {
     vector<vocabdata> vocab;
     vector<vocabdata> dummy; //dummy vector for sending to ones that dont matter(not for training)
+    
+    string resultdata;  //string to hold result data
+    float resultfloat;
+    
     dummy.clear(); //to clear dummy vector
 
     int arrsize = 0;//will hold the number of reviews
@@ -52,17 +56,26 @@ int main()
     training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
-    classifier(vocab,mapmatrixtrain,arrsize);
+
+    resultdata += "Training Data set Accuracy:\t";
+    resultfloat = classifier(vocab,mapmatrixtrain,arrsize);
+    resultdata += to_string(resultfloat);
+    resultdata += "\n\n";
+
 
     //test data
     arrsize = 0;
     int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",dummy,arrsize);
 
     cout << "\nTesting on Test Data" << endl; 
-    classifier(vocab,mapmatrix,arrsize);
 
-    //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
+    resultdata += "Testing Data set Accuracy:\t";
+    resultfloat = classifier(vocab,mapmatrix,arrsize);
+    resultdata += to_string(resultfloat);
 
+    ofstream resultfileOut;
+    resultfileOut.open("result.txt");
+    resultfileOut << resultdata << endl;
     return 0;
 }
 
@@ -280,7 +293,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
         zx ++;
     }
 
-    cout << "Preproccesor Complete" << endl;
+    cout << "\nPreproccesor Complete\n" << endl;
 
     arrsize = 0;
     arrsize = numlines;
@@ -339,7 +352,7 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 }
 
 //send it curPrero to find which words are in sentences
-void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
+float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 {
     //this contains the percent for if classifier thinks sentence is good or bad
     vector<float> spredics;
@@ -380,7 +393,7 @@ void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 
     cout << "Classifier Accuracy: " << accuracyofclassifier << endl;
 
-    return;
+    return accuracyofclassifier;
 }
 
 
