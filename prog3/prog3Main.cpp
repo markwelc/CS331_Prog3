@@ -25,6 +25,7 @@ struct vocabdata
     float pbrev;     //probability of good review
     float pgrev;      //probability of bad review
 };
+float accuracyofclassifier = 0;
 
 //global for training data
 vector<vocabdata> vdata;
@@ -171,7 +172,9 @@ void preprocessor(string fileInName, string fileOutName)
         curLineV.clear();
 
         /*for (int x = 0; x<vdata.size(); ++x)
-            cout << vdata[x].vocab << " " <<  vdata[x].brev << " " <<  vdata[x].grev << endl;
+            cout << vdata[x].vocab << " " <<  vdata[x].brev << " " <<  vdata[x].grev << endl;//*/
+        /*for (int x = 0; x<vocab.size(); ++x)
+            cout << vocab[x] << endl;
         cout << "actual vocab size: " << vocab.size() << "\tnew vector size: " << vdata.size() << endl;//*/
     }
 
@@ -226,16 +229,20 @@ void preprocessor(string fileInName, string fileOutName)
 }
 
 void training()
-{
+{   
+    //insert an extra vocab on to hold data for parent review percents
     vector<vocabdata>::iterator it;
     it = vdata.begin();
     it = vdata.insert(it,0,vocabdata());
 
     vdata[0].vocab = " ";
 
+    //to find the percent that a review is good or bad
     float numberg = 0.0;
     float numberb = 0.0;
     float tnumber = 0.0;
+
+    //finds percentages for how often a word results in a good or bad review
     for(int i = 0; i < vdata.size(); i++){
         tnumber += vdata[i].grev + vdata[i].brev;
         numberg += vdata[i].grev;
@@ -245,15 +252,46 @@ void training()
         vdata[i].pbrev = (vdata[i].brev) / (vdata[i].grev + vdata[i].brev);
     }
     
+    //calculate review percents
     vdata[0].pgrev = (numberg) / (tnumber);
     vdata[0].pbrev = (numberb) / (tnumber);
 
     cout << "Training Done" << endl;
 }
 
-void classifier()
+//send it curPrero to find which words are in sentences
+void classifier(vector)
 {
-    //stuff
+    vector<int> spredics;
+    int numcorrect;
+
+    for(int i = 0; i < vpresent.size(); i++){
+        float curgpredict = 0.0;
+        float curbpredict = 0.0;
+        //minus 2 because of the extra vocab word added
+        for(int j = 0; j<vdata.size()-2; j++){
+            if(vpresent[i] == 1)
+            {
+                //gets vocab word a present location and checks probailities and multiplies them on
+                curgpredict = curgpredict * vdata[j].pgrev;
+                curbpredict = curbpredict * vdata[j].pbrev;
+            }
+            i++
+        }
+        curgpredict = curgpredict * vdata[0].pgrev;
+        curbpredict = curbpredict * vdata[0].pbrev;
+
+        if(curgpredict > curbpredict)
+            spredics.insert(spredics.end(),spredics.begin(),curgpredict);
+        else
+            spredics.insert(spredics.end(),spredics.begin(),curbpredict);
+
+        if(vpresent[i] == spredics[spredics.size()-1])
+            numcorrect += 1.0;
+    }
+
+    //accuracy of classifier
+    accuracyofclassifier = numcorrect / ((float)(spredics.size()));
     return;
 }
 
