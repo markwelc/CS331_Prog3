@@ -341,8 +341,9 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         //calculates the probability that the word appears in a bad review
         vocab[i].pbrev = (float)((vocab[i].brev) / (vocab[i].grev + vocab[i].brev));
         
-        if(vocab[i].word == "ice")
-            cout << vocab[i].grev << " " << vocab[i].brev << " " << (vocab[i].grev + vocab[i].brev) << endl;
+        //for testing words
+        /*if(vocab[i].word == "ice")
+            cout << vocab[i].grev << " " << vocab[i].brev << " " << (vocab[i].grev + vocab[i].brev) << endl;//*/
     }
     
     //calculate probability that sentence is g or b 
@@ -372,10 +373,8 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
-                //if(vocab[j].pgrev != 0.0)
-                    curgpredict = curgpredict * vocab[j].pgrev;
-                //if(vocab[j].pbrev != 0.0)
-                    curbpredict = curbpredict * vocab[j].pbrev;
+                curgpredict = curgpredict * vocab[j].pgrev;
+                curbpredict = curbpredict * vocab[j].pbrev;
 
                 //testing
                 //if(vocab[j].pbrev == 0.0 || vocab[j].pgrev == 0.0)
