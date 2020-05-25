@@ -25,13 +25,12 @@ struct vocabdata
         word = "default***"; //lets hope we never see this again
         grev = 0.0;
         brev = 0.0;
-        pgrev = -1.0;
-        pbrev = -1.0;
+        pgrev = 0.0;
+        pbrev = 0.0;
     }
 };
 
 float accuracyofclassifier = 0; //stores data for accuracy of the actual data set
-int trainonvar = 0;
 
 
 int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vocab, int & arrsize);
@@ -53,9 +52,7 @@ int main()
     //int** mapmatrix = preprocessor("exampleIn.txt", "exampleOut.txt",vocab,arrsize);
     
     //training data
-    trainonvar = 1;
     int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
-    trainonvar = 0;
     training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
@@ -343,7 +340,9 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         vocab[i].pgrev = (float)((vocab[i].grev) / (vocab[i].grev + vocab[i].brev));
         //calculates the probability that the word appears in a bad review
         vocab[i].pbrev = (float)((vocab[i].brev) / (vocab[i].grev + vocab[i].brev));
-        //cout << (vocab[i].grev + vocab[i].brev) << endl;
+        
+        if(vocab[i].word == "ice")
+            cout << vocab[i].grev << " " << vocab[i].brev << " " << (vocab[i].grev + vocab[i].brev) << endl;
     }
     
     //calculate probability that sentence is g or b 
@@ -373,15 +372,19 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
-                if(vocab[j].pgrev != -1.0)
+                //if(vocab[j].pgrev != 0.0)
                     curgpredict = curgpredict * vocab[j].pgrev;
-                if(vocab[j].pbrev != -1.0)
+                //if(vocab[j].pbrev != 0.0)
                     curbpredict = curbpredict * vocab[j].pbrev;
+
+                //testing
+                //if(vocab[j].pbrev == 0.0 || vocab[j].pgrev == 0.0)
+                //    cout << "### " << vocab[j].word << " good percent: " << (float)(vocab[j].pgrev) << "bad percent: " << (float)(vocab[j].pbrev) << endl;
             }
         }
 
         //testing
-        cout << "good prediction: " << curgpredict << "\tbad prediction: " << curbpredict << endl;
+        //cout << "good prediction: " << curgpredict << "\tbad prediction: " << curbpredict << endl;
 
         //decides if sentence is good or bad off which percent is higher
         if(curgpredict > curbpredict)
@@ -393,7 +396,7 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
             numcorrect += 1.0;
 
         //testing
-        cout << "prediction: " << spredics[spredics.size()-1] << endl;
+        //cout << "prediction: " << spredics[spredics.size()-1] << endl;
     }
     cout << "\nClassifier is Done" << endl;
 
