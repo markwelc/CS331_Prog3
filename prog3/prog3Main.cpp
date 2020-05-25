@@ -17,7 +17,7 @@ void cleanLine(vector<char> & line);
 
 struct vocabdata
 {
-    string vocab;
+    string word;
 
     float grev;
     float brev;
@@ -56,7 +56,7 @@ void preprocessor(string fileInName, string fileOutName)
     string curLine;
 
     //I don't know why the words here aren't colored
-    vector<string> vocab; //so this holds all the words and data
+    vector<vocabdata> vocab; //so this holds all the words and data
     int* curPrepro = NULL;
     vector<vector<string>> allLinesSplit;
     //char curRating = '\0'; //holds the rating of the current line
@@ -102,63 +102,91 @@ void preprocessor(string fileInName, string fileOutName)
 
             if(start && end)
             {
-                
-
                 //auto newitr = curLineV.end();
                 //end = &(*newitr);
                 string temp2(start, end);
                 
                 //makes vector for bayes computation
-                if(vdatatrain == 1){
-                    int it = -1;
-                    for(int z = 0; z < vdata.size(); z++){
-                        if(vdata[z].vocab == temp2){
-                            it = z;
-                            break;
-                        }
-                    }
+                // if(vdatatrain == 1) //we would still need alot of it but some of it can be removed//so all this could go away if vocab had structs instead of strings?
+                // //we just need to also record grev and brev
+                // //yeah
+                // //cool
+                // are you busy for a couple day? i can try to redo your code to work with structs but it might take me a long time haha
+                // {
+                //     int it = -1;
+                //     for(int z = 0; z < vdata.size(); z++)//so this just looks for the first match
+                //     {
+                //         if(vdata[z].vocab == temp2){
+                //             it = z;
+                //             break;
+                //         }
+                //     }
 
-                    if(it != -1)
-                    {
-                        if(curRatingStr == "1")
-                            vdata[it].grev += 1.0;
-                        else
-                            vdata[it].brev += 1.0;
-                    }
-                    else{
-                        vdata.push_back(vocabdata());
-                        int curvec = vdata.size()-1;
-                        vdata[curvec].vocab = temp2;
-                        //add number of good/bad
-                        if(curRatingStr == "1"){
-                            vdata[curvec].grev = 1.0;
-                            vdata[curvec].brev = 0.0;
-                        }
-                        else{
-                            vdata[curvec].grev = 0.0;
-                            vdata[curvec].brev = 1.0;
-                        }
-                    }
-                }
-                
-                
+                //     if(it != -1) //if there was a match, increment the num of times it was in a good/bad review
+                //     {
+                //         if(curRatingStr == "1")
+                //             vdata[it].grev += 1.0;
+                //         else
+                //             vdata[it].brev += 1.0;
+                //     }
+                //     else//so there wasn't a match
+                //     {
+                //         vdata.push_back(vocabdata());//stick an empty new item on the back
 
+                //         int curvec = vdata.size()-1;//access last thing in vector
+                //         vdata[curvec].vocab = temp2;//set its string to the word we just got
+                //         //add number of good/bad
+                //         if(curRatingStr == "1")//this is the only review with this word
+                //         {
+                //             vdata[curvec].grev = 1.0;
+                //             vdata[curvec].brev = 0.0;
+                //         }
+                //         else
+                //         {
+                //             vdata[curvec].grev = 0.0;
+                //             vdata[curvec].brev = 1.0;
+                //         }
+                //     }
+                // }
 
                 //initilize in vocab
                 auto kiter = vocab.begin();
-                while(kiter != vocab.end() && temp2.compare(*kiter) > 0)
+                while(kiter != vocab.end() && temp2.compare(kiter->word) > 0)
                 {
                     kiter++;
                 }
                 if(kiter == vocab.end())
                 {
-                    vocab.push_back(temp2);
+                    vocab.push_back(vocabdata());
+                    (vocab.end())->word = temp2;
+                    if(curRatingStr == "1")//this is the only review with this word
+                    {
+                        (vocab.end())->grev = 1.0;
+                        (vocab.end())->brev = 0.0;
+                    }
+                    else
+                    {
+                        (vocab.end())->grev = 0.0;
+                        (vocab.end())->brev = 1.0;
+                    }
                 }
-                else if(temp2.compare(*kiter) != 0)
+                else if(temp2.compare(kiter->word) != 0)
                 {   
-                    vocab.emplace(kiter, temp2);          
+                    //we've found where the word should go
+                    vocab.emplace(kiter, vocabdata()); //put an empty thing there //I have no idea if this works
+                    kiter->word = temp2; //set its word //I also have no idea if this works
+                    if(curRatingStr == "1")//set its rating //this is the only review with this word
+                    {
+                        kiter->grev = 1.0;
+                        kiter->brev = 0.0;
+                    }
+                    else
+                    {
+                        kiter->grev = 0.0;
+                        kiter->brev = 1.0;
+                    }      
                 }
-                curLineSplit.push_back(temp2);
+                curLineSplit.push_back(temp2);//this has nothing to do with vocab, so it should be fine
 
                 start = NULL;
                 end = NULL;
@@ -171,6 +199,7 @@ void preprocessor(string fileInName, string fileOutName)
 
         curLineV.clear();
 
+        //this stuff just printing out for debugging?
         /*for (int x = 0; x<vdata.size(); ++x)
             cout << vdata[x].vocab << " " <<  vdata[x].brev << " " <<  vdata[x].grev << endl;//*/
         /*for (int x = 0; x<vocab.size(); ++x)
@@ -181,11 +210,11 @@ void preprocessor(string fileInName, string fileOutName)
     //at this point, vocab should contain every word and allLines should contain every line
     //print the vocab into the output files
     auto hiter = vocab.begin();
-    fileOut << *hiter;
+    fileOut << hiter->word;
     hiter++;
     while(hiter != vocab.end()) 
     {
-        fileOut << ',' << *hiter;
+        fileOut << ',' << hiter->word;
         hiter++;
     }
     fileOut << ",classLabel" << endl;
@@ -202,7 +231,7 @@ void preprocessor(string fileInName, string fileOutName)
             //find a match in vocab
             for(auto jiter = vocab.begin(); jiter != vocab.end(); jiter++)//I could make this loop quite a bit faster, but I don't care
             {
-                if(kiter->compare(*jiter) == 0)
+                if(kiter->compare(jiter->word) == 0)
                     curPrepro[jiter - vocab.begin()] = 1;
             }
         }
@@ -235,7 +264,7 @@ void training()
     it = vdata.begin();
     it = vdata.insert(it,0,vocabdata());
 
-    vdata[0].vocab = " ";
+    //vdata[0].vocab = " ";
 
     //to find the percent that a review is good or bad
     float numberg = 0.0;
@@ -260,9 +289,11 @@ void training()
 }
 
 //send it curPrero to find which words are in sentences
-void classifier(vector)
+void classifier()
 {
-    vector<int> spredics;
+    vector<float> spredics;
+    vector<int> vpresent;
+
     int numcorrect;
 
     for(int i = 0; i < vpresent.size(); i++){
@@ -276,15 +307,16 @@ void classifier(vector)
                 curgpredict = curgpredict * vdata[j].pgrev;
                 curbpredict = curbpredict * vdata[j].pbrev;
             }
-            i++
+            i++;
         }
+        //multiplies on total prediction
         curgpredict = curgpredict * vdata[0].pgrev;
         curbpredict = curbpredict * vdata[0].pbrev;
 
-        if(curgpredict > curbpredict)
+        /*if(curgpredict > curbpredict)
             spredics.insert(spredics.end(),spredics.begin(),curgpredict);
         else
-            spredics.insert(spredics.end(),spredics.begin(),curbpredict);
+            spredics.insert(spredics.end(),spredics.begin(),curbpredict);*/
 
         if(vpresent[i] == spredics[spredics.size()-1])
             numcorrect += 1.0;
