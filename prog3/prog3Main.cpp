@@ -39,8 +39,8 @@ int main()
     // preprocessor("testSet.txt", "preprocessed_test.txt");
     vdatatrain = 1;
     preprocessor("exampleIn.txt", "exampleOut.txt");
-    training();
-    classifier();
+    //training();
+    //classifier();
 
     //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
 
