@@ -48,9 +48,14 @@ int main()
     // preprocessor("testSet.txt", "preprocessed_test.txt");
 
     int arrsize = 0;
-    int** mapmatrix = preprocessor("exampleIn.txt", "exampleOut.txt",vocab,arrsize);
-
+    //int** mapmatrix = preprocessor("exampleIn.txt", "exampleOut.txt",vocab,arrsize);
+    
+    preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
     training(vocab);
+
+    arrsize = 0;
+    int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",vocab,arrsize);
+
     classifier(vocab,mapmatrix,arrsize);
 
     //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
