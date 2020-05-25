@@ -34,7 +34,7 @@ float accuracyofclassifier = 0; //stores data for accuracy of the actual data se
 
 
 int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vocab, int & arrsize);
-void training(vector<vocabdata> & vocab);
+void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize);
 void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsiz);
 void cleanLine(vector<char> & line);
 
@@ -44,18 +44,21 @@ int main()
     vector<vocabdata> dummy; //dummy vector for sending to ones that dont matter(not for training)
     dummy.clear(); //to clear dummy vector
 
-    // preprocessor("trainingSet.txt", "preprocessed_train.txt");
-    // preprocessor("testSet.txt", "preprocessed_test.txt");
-
-    int arrsize = 0;
+    int arrsize = 0;//will hold the number of reviews
     //int** mapmatrix = preprocessor("exampleIn.txt", "exampleOut.txt",vocab,arrsize);
     
-    preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
-    training(vocab);
+    //training data
+    int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
+    training(vocab,mapmatrixtrain,arrsize);
 
+    cout << "\nTesting on Training Data" << endl; 
+    classifier(vocab,mapmatrixtrain,arrsize);
+
+    //test data
     arrsize = 0;
-    int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",vocab,arrsize);
+    int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",dummy,arrsize);
 
+    cout << "\nTesting on Test Data" << endl; 
     classifier(vocab,mapmatrix,arrsize);
 
     //cout << vdata[7].vocab << " " << vdata[7].pgrev << " " << vdata[7].pbrev << endl;
@@ -126,7 +129,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
 
                 //incrementing if already in vocab
                 int it = -1;
-                for(int z = 0; z < vocab.size(); z++)//so this just looks for the first match
+                for(unsigned int z = 0; z < vocab.size(); z++)//so this just looks for the first match
                 {
                     if(vocab[z].word == temp2){
                         it = z;
@@ -279,14 +282,17 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
 
     cout << "Preproccesor Complete" << endl;
 
+    arrsize = 0;
     arrsize = numlines;
     return curPrepro;
 }
 
-void training(vector<vocabdata> & vocab)
+void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
+//finds P(review = good)
+//for each word, finds P(word is in good review) and P(word is in bad review)
 {   
     //insert an extra vocab on to hold data for parent review percents
-    vocabdata* temp = new vocabdata();//it wasn't a pointer...
+    vocabdata* temp = new vocabdata();
                     
     //cout << "temp->word = " << temp->word << endl;
     //temp->word = temp2;
@@ -299,23 +305,32 @@ void training(vector<vocabdata> & vocab)
     //to find the percent that a review is good or bad
     float numberg = 0.0;
     float numberb = 0.0;
-    float tnumber = 0.0;
+    float tnumber = 0.0;//total number of times the word is used
+
+    for(int i = 0; i < arrsize; i++){
+        if(mapmatrix[i][vocab.size()-1] == 1)
+            numberg += 1.0;
+        else
+            numberb += 1.0;
+
+        tnumber++; //could do different way but yolo
+    }
 
     //finds percentages for how often a word results in a good or bad review
-    for(int i = 0; i < vocab.size(); i++){
-        //Keeps track of good and bad words for P(good) and P(bad) calculation
-        tnumber += vocab[i].grev + vocab[i].brev;
-        numberg += vocab[i].grev;
-        numberb += vocab[i].brev;
+    for(unsigned int i = 0; i < vocab.size(); i++){
+        //tnumber += vocab[i].grev + vocab[i].brev;
+        //numberg += vocab[i].grev;//counts the number of words in all good reviews
+        //numberb += vocab[i].brev;
 
-        //each word is independent, this finds the Probabilities?
+        //calculates the probability that the word appears in a good review
         vocab[i].pgrev = (float)((vocab[i].grev) / (vocab[i].grev + vocab[i].brev));
+        //calculates the probability that the word appears in a bad review
         vocab[i].pbrev = (float)((vocab[i].brev) / (vocab[i].grev + vocab[i].brev));
         //cout << (vocab[i].grev + vocab[i].brev) << endl;
     }
     
-    //calculate review percents
-    (vocab.end() - 1)->pgrev = (float)((numberg) / (tnumber));
+    //calculate probability that sentence is g or b 
+    (vocab.end() - 1)->pgrev = (float)((numberg) / (tnumber));//this is the number of good sentences divided by number of sentences
     (vocab.end() - 1)->pbrev = (float)((numberb) / (tnumber));
 
     //for testing
@@ -337,7 +352,7 @@ void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         float curbpredict = (vocab.end() - 1)->pbrev;
 
         //minus 2 because of the extra vocab word added
-        for(int j = 0; j<vocab.size()-2; j++){
+        for(unsigned int j = 0; j<vocab.size()-2; j++){
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
@@ -345,10 +360,6 @@ void classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
                 curbpredict = curbpredict * vocab[j].pbrev;
             }
         }
-
-        //multiplies on total prediction
-        curgpredict = curgpredict * vocab[vocab.size()-1].pgrev;
-        curbpredict = curbpredict * vocab[vocab.size()-1].pbrev;
 
         //testing
         //cout << "good prediction: " << curgpredict << "\tbad prediction: " << curbpredict << endl;
