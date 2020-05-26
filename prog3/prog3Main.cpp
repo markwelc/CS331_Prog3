@@ -31,6 +31,7 @@ struct vocabdata
 };
 
 float accuracyofclassifier = 0; //stores data for accuracy of the actual data set
+int vocabdone = 0;
 
 
 int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vocab, int & arrsize);
@@ -53,6 +54,7 @@ int main()
     
     //training data
     int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize);
+    vocabdone = 1;
     training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
@@ -139,7 +141,8 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
                 //auto newitr = curLineV.end();
                 //end = &(*newitr);
                 string temp2(start, end);
-
+                
+                if(vocabdone == 0){ //dont want to add words not in training set to vocab
                 //incrementing if already in vocab
                 int it = -1;
                 for(unsigned int z = 0; z < vocab.size(); z++)//so this just looks for the first match
@@ -208,6 +211,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
                     //kiter->word = temp2; //set its word
                         
                 }
+                }
 
                 curLineSplit.push_back(temp2);
                 start = NULL;
@@ -234,7 +238,7 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
     //this stuff just printing out for debugging?
     /*for (int x = 0; x<vocab.size(); ++x)
         cout << vocab[x].word << " " <<  vocab[x].brev << " " <<  vocab[x].grev << endl;//*/
-    cout << "actual vocab size: " << vocab.size() << endl;//*/
+    //cout << "actual vocab size: " << vocab.size() << endl;//*/
 
     //at this point, vocab should contain every word and allLines should contain every line
     //print the vocab into the output files
