@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <algorithm>
+#include <bits/stdc++.h>
 
 using namespace std;
 
@@ -25,6 +26,7 @@ struct vocabdata
         word = "default***"; //lets hope we never see this again
         grev = 0.0;
         brev = 0.0;
+
         pgrev = 0.0;
         pbrev = 0.0;
     }
@@ -341,9 +343,9 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         //numberb += vocab[i].brev;
 
         //calculates the probability that the word appears in a good review
-        vocab[i].pgrev = (float)((vocab[i].grev) / (vocab[i].grev + vocab[i].brev));
+        vocab[i].pgrev = (float)((vocab[i].grev + 1) / (numberg + 2));//vocab[i].grev + vocab[i].brev + 2));
         //calculates the probability that the word appears in a bad review
-        vocab[i].pbrev = (float)((vocab[i].brev) / (vocab[i].grev + vocab[i].brev));
+        vocab[i].pbrev = (float)((vocab[i].brev + 1) / (numberb + 2));//vocab[i].grev + vocab[i].brev + 2));
         
         //for testing words
         /*if(vocab[i].word == "ice")
@@ -377,6 +379,7 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
+                //need to compute as log(calculation)
                 curgpredict = curgpredict * vocab[j].pgrev;
                 curbpredict = curbpredict * vocab[j].pbrev;
 
