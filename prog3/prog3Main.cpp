@@ -48,6 +48,7 @@ int readFile(string fileInName, vector<vocabdata> & vocab, bool vocabMutable, ve
 void addToVocab(string newWord, string rating, vector<vocabdata> & vocab, vector<vocabdata>::iterator position);
 ostream& printData(ostream& out, vector<vocabdata> vocab, int** mapmatrix, int arrsize);
 //this will print the vocab and the preprocessed data in a reader friendly format
+//this assumes that vocab has the extra element on the back (with the word "**")
 
 int main()
 {
@@ -66,12 +67,12 @@ int main()
     int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize, vocabMutable);
     vocabMutable = false;
 
+    training(vocab,mapmatrixtrain,arrsize);
+
     ofstream debugOut;
     debugOut.open("debugData.txt");
     printData(debugOut, vocab, mapmatrixtrain, arrsize);
     debugOut.close();
-
-    training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
 
@@ -87,7 +88,7 @@ int main()
 
     ofstream debugOut2;
     debugOut2.open("debugData2.txt");
-    printData(debugOut2, vocab, mapmatrixtrain, arrsize);
+    printData(debugOut2, vocab, mapmatrix, arrsize);
     debugOut2.close();
 
     cout << "\nTesting on Test Data" << endl; 
@@ -101,7 +102,6 @@ int main()
     resultfileOut << resultdata << endl;
     return 0;
 }
-
 
 
 
@@ -127,14 +127,13 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
         fileOut << ',' << hiter->word;
         hiter++;
     }
-    fileOut << ",classLabel" << endl;
 
     //actually make the preprocessed stuff
     curPrepro = new int*[numlines];
     for(int i = 0; i < numlines; i++)
-        curPrepro[i] = new int[vocab.size() + 1];
+        curPrepro[i] = new int[vocab.size()];
     for(int j = 0; j < numlines; j++){
-        for(unsigned int i = 0; i < vocab.size() + 1; i++)
+        for(unsigned int i = 0; i < vocab.size(); i++)
             curPrepro[j][i] = 0;
     }
     //for every word in allLines
@@ -147,7 +146,8 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
         for(auto kiter = iter->begin(); kiter != iter->end() - 1; kiter++)
         {
             //find a match in vocab
-            for(auto jiter = vocab.begin(); jiter != vocab.end(); jiter++)//I could make this loop quite a bit faster, but I don't care
+            for(auto jiter = vocab.begin(); jiter != vocab.end() - 1; jiter++)//I could make this loop quite a bit faster, but I don't care
+                //note: vocab.end() - 1 is being used because the last thing in vocab is the classlabel element
             {
                 if(kiter->compare(jiter->word) == 0)
                     curPrepro[curReview][jiter - vocab.begin()] = 1;
@@ -157,15 +157,15 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
         //at this point, we've gone through every word in a line save the last thing (the rating)
 
         if(*(iter->end() - 1) == "0")
-            curPrepro[curReview][vocab.size()] = 0;//get the rating and stick it onto curPrepro
+            curPrepro[curReview][vocab.size() - 1] = 0;//get the rating and stick it onto curPrepro
         else if(*(iter->end() - 1) == "1")
-            curPrepro[curReview][vocab.size()] = 1;
+            curPrepro[curReview][vocab.size() - 1] = 1;
         else
             cout << "iter->end() - 1 = " << *(iter->end() - 1) << endl;
 
         //stick it into the output file
         fileOut << curPrepro[curReview][0];
-        for(unsigned int i = 1; i < vocab.size() + 1; i++)
+        for(unsigned int i = 1; i < vocab.size(); i++)
             fileOut << ',' << curPrepro[curReview][i];
         fileOut << endl;
 
@@ -179,16 +179,12 @@ int** preprocessor(string fileInName, string fileOutName, vector<vocabdata> & vo
     return curPrepro;
 }
 
+
+
 void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 //finds P(review = good)
 //for each word, finds P(word is in good review) and P(word is in bad review)
 {   
-    //insert an extra vocab on to hold data for parent review percents
-    vocabdata* temp = new vocabdata();
-                    
-    vocab.push_back(*temp);
-    (vocab.end() - 1)->word = "**";
-
     //to find the percent that a review is good or bad
     float numberg = 0.0;
     float numberb = 0.0;
@@ -204,7 +200,7 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
     }
 
     //finds percentages for how often a word results in a good or bad review
-    for(unsigned int i = 0; i < vocab.size(); i++)
+    for(unsigned int i = 0; i < vocab.size() - 1; i++)
     {
         vocab[i].pgrev = (float)((vocab[i].grev + 1) / (numberg + 2));//calculates the probability that the word appears in a good review
         vocab[i].pbrev = (float)((vocab[i].brev + 1) / (numberb + 2));//calculates the probability that the word appears in a bad review
@@ -217,28 +213,30 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
     cout << "\nTraining Done" << endl;
 }
 
+
+
 //send it curPrero to find which words are in sentences
 float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 {
     int prediction = -1;
-    int numOfReviews = 0; //should end up being equal to arrsize
+    float numOfReviews = 0; //should end up being equal to arrsize
     float accuracyofclassifier = 0;//contains the overall accuracy
+    float numcorrect = 0;
 
-    int numcorrect = 0;
-
-    for(int i = 0; i < arrsize; i++){
+    for(int i = 0; i < arrsize; i++)
+    {
         //starting values, equal the P(good) and P(bad)
         float curgpredict = log10((vocab.end() - 1)->pgrev);
         float curbpredict = log10((vocab.end() - 1)->pbrev);
 
-        cout << "(vocab.end() - 1)->pbrev = " << (vocab.end() - 1)->pbrev << " and (vocab.end() - 1)->pgrev = " << (vocab.end() - 1)->pgrev << endl;
+        // cout << "(vocab.end() - 1)->pbrev = " << (vocab.end() - 1)->pbrev << " and (vocab.end() - 1)->pgrev = " << (vocab.end() - 1)->pgrev << endl;
 
         //minus 2 because of the extra vocab word added
         for(unsigned int j = 0; j<vocab.size()-2; j++){
 
-            cout << "vocab[j].word = " << vocab[j].word;
-            cout << " : vocab[j].pgrev = " << vocab[j].pgrev;
-            cout << " : vocab[j].pbrev = " << vocab[j].pbrev;
+            // cout << "vocab[j].word = " << vocab[j].word;
+            // cout << " : vocab[j].pgrev = " << vocab[j].pgrev;
+            // cout << " : vocab[j].pbrev = " << vocab[j].pbrev;
 
             if(mapmatrix[i][j] == 1)
             {
@@ -247,17 +245,17 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
                 curgpredict += log10(vocab[j].pgrev);//P(word = present | review = good)
                 curbpredict += log10(vocab[j].pbrev);
 
-                cout << " : the word is used";
+                // cout << " : the word is used";
             }
             else
             {
                 curgpredict += log10(1 - vocab[j].pgrev);//P(word = absent | review = good)
                 curbpredict += log10(1 - vocab[j].pbrev);
 
-                cout << " : the word is not used";
+                // cout << " : the word is not used";
             }
             
-            cout << endl;
+            // cout << endl;
         }
 
         //decides if sentence is good or bad off which percent is higher
@@ -266,7 +264,9 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         else
             prediction = 0;
 
-        cout << "curgpredict = " << curgpredict << ", curbpredict = " << curbpredict  << ", and prediction = " << prediction << endl;
+        // cout << "curgpredict = " << curgpredict << ", curbpredict = " << curbpredict  << ", and prediction = " << prediction << endl;
+        // cout << "mapmatrix[i][vocab.size()-1] = " << mapmatrix[i][vocab.size()-1] << endl;
+        //cout << "mapmatrix[i][vocab.size()-2] = " << mapmatrix[i][vocab.size()-2] << endl;
 
         if(mapmatrix[i][vocab.size()-1] == prediction)
             numcorrect += 1;
@@ -280,6 +280,8 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
     cout << "\nClassifier is Done" << endl;
 
     //accuracy of classifier
+    // cout << "numcorrect = " << numcorrect;
+    // cout << " numOfReviews = " << numOfReviews << endl;
     accuracyofclassifier = numcorrect / numOfReviews;
 
     cout << "Classifier Accuracy: " << accuracyofclassifier << endl;
@@ -390,6 +392,14 @@ int readFile(string fileInName, vector<vocabdata> & vocab, bool vocabMutable, ve
         numlines ++; //keeping track of number of lines
     }
 
+    //insert an extra vocab element on to hold statistics for all the reviews
+    if(vocabMutable)
+    {
+        vocabdata* temp = new vocabdata();
+        vocab.push_back(*temp);
+        (vocab.end() - 1)->word = "classlabel";
+    }
+
     return numlines;
 }
 
@@ -446,9 +456,9 @@ void addToVocab(string newWord, string rating, vector<vocabdata> & vocab, vector
 
 ostream& printData(ostream& out, vector<vocabdata> vocab, int** mapmatrix, int arrsize)
 {
-    int* length = new int[vocab.size() + 1];//this will be used to keep track of the sizes of the words in vocab
+    int* length = new int[vocab.size()];//this will be used to keep track of the sizes of the words in vocab
 
-    out << "there are " << vocab.size() << " words in the vocabulary and " << arrsize << " reviews" << endl;
+    out << "there are " << vocab.size() - 1 << " words in the vocabulary and " << arrsize << " reviews" << endl;
 
     //print all the words in vocab
     for(unsigned int i = 0; i < vocab.size(); i++)
@@ -456,13 +466,12 @@ ostream& printData(ostream& out, vector<vocabdata> vocab, int** mapmatrix, int a
         length[i] = vocab[i].word.length();
         out << vocab[i].word << ",";
     }
-    length[vocab.size()] = strlen("classlabel");
-    out << "classlabel" << endl;
+    out << endl;
 
     //print the preprocessed data
     for(int j = 0; j < arrsize; j++)
     {
-        for(unsigned int k = 0; k < vocab.size() + 1; k++)
+        for(unsigned int k = 0; k < vocab.size(); k++)
         {
             out << mapmatrix[j][k];
             for(int h = 1; h < length[k] + 1; h++)

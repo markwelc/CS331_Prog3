@@ -1,3 +1,3 @@
-Training Data set Accuracy:	0.935872
+Training Data set Accuracy:	0.933868
 
-Testing Data set Accuracy:	0.386318
+Testing Data set Accuracy:	0.728370
