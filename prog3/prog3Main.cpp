@@ -46,6 +46,8 @@ int readFile(string fileInName, vector<vocabdata> & vocab, bool vocabMutable, ve
 // after running, allLinesSplit will be a 2D vector of strings where each row is a full review, and each cell is a word in that review
     // the last cell in each row shows whether the review is positive or negative
 void addToVocab(string newWord, string rating, vector<vocabdata> & vocab, vector<vocabdata>::iterator position);
+ostream& printData(ostream& out, vector<vocabdata> vocab, int** mapmatrix, int arrsize);
+//this will print the vocab and the preprocessed data in a reader friendly format
 
 int main()
 {
@@ -63,6 +65,12 @@ int main()
     //training data
     int** mapmatrixtrain = preprocessor("trainingSet.txt", "preprocessed_train.txt",vocab,arrsize, vocabMutable);
     vocabMutable = false;
+
+    ofstream debugOut;
+    debugOut.open("debugData.txt");
+    printData(debugOut, vocab, mapmatrixtrain, arrsize);
+    debugOut.close();
+
     training(vocab,mapmatrixtrain,arrsize);
 
     cout << "\nTesting on Training Data" << endl; 
@@ -76,6 +84,11 @@ int main()
     //test data
     arrsize = 0;
     int** mapmatrix = preprocessor("testSet.txt", "preprocessed_test.txt",vocab,arrsize, vocabMutable);
+
+    ofstream debugOut2;
+    debugOut2.open("debugData2.txt");
+    printData(debugOut2, vocab, mapmatrixtrain, arrsize);
+    debugOut2.close();
 
     cout << "\nTesting on Test Data" << endl; 
 
@@ -207,7 +220,8 @@ void training(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 //send it curPrero to find which words are in sentences
 float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
 {
-    vector<float> spredics;//this contains the percent for if classifier thinks sentence is good or bad
+    int prediction = -1;
+    int numOfReviews = 0; //should end up being equal to arrsize
     float accuracyofclassifier = 0;//contains the overall accuracy
 
     int numcorrect = 0;
@@ -217,36 +231,56 @@ float classifier(vector<vocabdata> & vocab, int** mapmatrix, int arrsize)
         float curgpredict = log10((vocab.end() - 1)->pgrev);
         float curbpredict = log10((vocab.end() - 1)->pbrev);
 
+        cout << "(vocab.end() - 1)->pbrev = " << (vocab.end() - 1)->pbrev << " and (vocab.end() - 1)->pgrev = " << (vocab.end() - 1)->pgrev << endl;
+
         //minus 2 because of the extra vocab word added
         for(unsigned int j = 0; j<vocab.size()-2; j++){
+
+            cout << "vocab[j].word = " << vocab[j].word;
+            cout << " : vocab[j].pgrev = " << vocab[j].pgrev;
+            cout << " : vocab[j].pbrev = " << vocab[j].pbrev;
+
             if(mapmatrix[i][j] == 1)
             {
                 //gets vocab word a present location and checks probailities and multiplies them on
                 //need to compute as log(calculation)
                 curgpredict += log10(vocab[j].pgrev);//P(word = present | review = good)
                 curbpredict += log10(vocab[j].pbrev);
+
+                cout << " : the word is used";
             }
             else
             {
                 curgpredict += log10(1 - vocab[j].pgrev);//P(word = absent | review = good)
                 curbpredict += log10(1 - vocab[j].pbrev);
+
+                cout << " : the word is not used";
             }
+            
+            cout << endl;
         }
 
         //decides if sentence is good or bad off which percent is higher
         if(curgpredict > curbpredict)
-            spredics.push_back(1);
+            prediction = 1;
         else
-            spredics.push_back(0);
+            prediction = 0;
 
-        if(mapmatrix[i][vocab.size()-1] == spredics[spredics.size()-1])
+        cout << "curgpredict = " << curgpredict << ", curbpredict = " << curbpredict  << ", and prediction = " << prediction << endl;
+
+        if(mapmatrix[i][vocab.size()-1] == prediction)
             numcorrect += 1;
+        
+        numOfReviews++;
     }
+
+    if(numOfReviews != arrsize)
+        cout << "numOfReviews != arrsize" << endl;
 
     cout << "\nClassifier is Done" << endl;
 
     //accuracy of classifier
-    accuracyofclassifier = numcorrect / ((float)(spredics.size()));
+    accuracyofclassifier = numcorrect / numOfReviews;
 
     cout << "Classifier Accuracy: " << accuracyofclassifier << endl;
 
@@ -406,4 +440,36 @@ void addToVocab(string newWord, string rating, vector<vocabdata> & vocab, vector
         else
             position->brev += 1.0;
     }
+}
+
+
+
+ostream& printData(ostream& out, vector<vocabdata> vocab, int** mapmatrix, int arrsize)
+{
+    int* length = new int[vocab.size() + 1];//this will be used to keep track of the sizes of the words in vocab
+
+    out << "there are " << vocab.size() << " words in the vocabulary and " << arrsize << " reviews" << endl;
+
+    //print all the words in vocab
+    for(unsigned int i = 0; i < vocab.size(); i++)
+    {
+        length[i] = vocab[i].word.length();
+        out << vocab[i].word << ",";
+    }
+    length[vocab.size()] = strlen("classlabel");
+    out << "classlabel" << endl;
+
+    //print the preprocessed data
+    for(int j = 0; j < arrsize; j++)
+    {
+        for(unsigned int k = 0; k < vocab.size() + 1; k++)
+        {
+            out << mapmatrix[j][k];
+            for(int h = 1; h < length[k] + 1; h++)
+                out << " ";
+        }
+        out << endl;
+    }
+
+    return out;
 }
