@@ -300,7 +300,7 @@ void cleanLine(vector<char> & line)
         line.at(i) = tolower(*iPtr);
         if(iswspace(*iPtr))
             line.at(i) = ' ';//change all whitespaces to spaces
-        if(isalpha(*iPtr) || isspace(*iPtr))//if the character isn't an alphanumeric character or a whitspace
+        if(isalnum(*iPtr) || isspace(*iPtr))//if the character isn't an alphanumeric character or a whitspace
         {
             iPtr++;
             i++;
@@ -328,22 +328,17 @@ int readFile(string fileInName, vector<vocabdata> & vocab, bool vocabMutable, ve
     //for every line in the input file
     while(getline(fileIn, curLine))//get a review
     {
-        vector<char> curLineV(curLine.begin(), curLine.end()); //turn it into a vector of characters
-
-        //get the reviews rating
-        for (auto iter = curLineV.end(); iter != curLineV.begin(); --iter)//this is an absurd solution, but it works
+        for(int i = curLine.length() - 1; i > -1; i--) //grab the rating and remove it (cleanLine can't deal with it)
         {
-            if(*iter == '1')
+            if(curLine[i] == '1' || curLine[i] == '0')
             {
-                curRatingStr = "1";
-                break;
-            }
-            else if(*iter == '0')
-            {
-                curRatingStr = "0";
+                curRatingStr = curLine[i];
+                curLine.erase(i);
                 break;
             }
         }
+
+        vector<char> curLineV(curLine.begin(), curLine.end()); //turn it into a vector of characters
 
         cleanLine(curLineV);//clean it up
 
